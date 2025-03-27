@@ -4,7 +4,11 @@ import Vapi from '@vapi-ai/web';
 
 
 // Put your Vapi Public Key below.
-const vapi = new Vapi("21a62fd1-30b6-42dc-b1d6-a50bdfba200b");
+const vapi = new Vapi({
+  publicKey: "21a62fd1-30b6-42dc-b1d6-a50bdfba200b",
+  debug: true, // Enable debug mode for better error logging
+  baseURL: "/call" // Use the proxied endpoint
+});
 
 const usePublicKeyInvalid = () => {
   const [showPublicKeyInvalidMessage, setShowPublicKeyInvalidMessage] = useState(false);
@@ -87,9 +91,20 @@ function App() {
 
 
   // call start handler
-  const startCallInline = () => {
-    setConnecting(true);
-    vapi.start("5f975d0b-a3a4-470f-a57f-6693f522df9e");
+  const startCallInline = async () => {
+    try {
+      setConnecting(true);
+      await vapi.start("5f975d0b-a3a4-470f-a57f-6693f522df9e", {
+        retryOnError: true,
+        maxRetries: 3
+      });
+    } catch (error) {
+      console.error('Failed to start call:', error);
+      setConnecting(false);
+      if (isPublicKeyMissingError({ vapiError: error })) {
+        setShowPublicKeyInvalidMessage(true);
+      }
+    }
   };
   const endCall = () => {
     vapi.stop();
