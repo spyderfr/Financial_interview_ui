@@ -5,9 +5,7 @@ import Vapi from '@vapi-ai/web';
 
 // Put your Vapi Public Key below.
 const vapi = new Vapi({
-  publicKey: "21a62fd1-30b6-42dc-b1d6-a50bdfba200b",
-  debug: true, // Enable debug mode for better error logging
-  baseURL: "/call" // Use the proxied endpoint
+  publicKey: "21a62fd1-30b6-42dc-b1d6-a50bdfba200b" 
 });
 
 const usePublicKeyInvalid = () => {
@@ -94,15 +92,27 @@ function App() {
   const startCallInline = async () => {
     try {
       setConnecting(true);
-      await vapi.start("5f975d0b-a3a4-470f-a57f-6693f522df9e", {
-        retryOnError: true,
-        maxRetries: 3
-      });
+      vapi.start("5f975d0b-a3a4-470f-a57f-6693f522df9e");
     } catch (error) {
       console.error('Failed to start call:', error);
       setConnecting(false);
-      if (isPublicKeyMissingError({ vapiError: error })) {
+      
+      // Handle JSON parsing errors
+      if (error instanceof SyntaxError && error.message.includes('JSON')) {
+        console.error('JSON parsing error from API:', error);
+        // Display a user-friendly message
+        setMessages([...messages, { 
+          text: "Sorry, there was an error connecting to the service. Please try again later.", 
+          type: 'system' 
+        }]);
+      } else if (isPublicKeyMissingError({ vapiError: error })) {
         setShowPublicKeyInvalidMessage(true);
+      } else {
+        // Handle other errors
+        setMessages([...messages, { 
+          text: "An error occurred. Please try again.", 
+          type: 'system' 
+        }]);
       }
     }
   };
